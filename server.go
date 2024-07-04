@@ -2,29 +2,28 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 )
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	if r.Method == "GET" {
-		w.Write([]byte("hello world"))
-	} else {
-		body, _ := ioutil.ReadAll(r.Body)
-		w.Write(body)
+	message := "This HTTP triggered function executed successfully. Pass a name in the query string for a personalized response.\n"
+	name := r.URL.Query().Get("name")
+
+	if name != "" {
+		message = fmt.Sprintf("Hello, %s. This HTTP triggered function executed successfully.\n", name)
 	}
+	fmt.Fprintf(w, message)
 }
 
 func main() {
-	customHandlerPort, exists := os.LookupEnv("FUNCTIONS_CUSTOMHANDLER_PORT")
-	if !exists {
-		customHandlerPort = "8080"
+	listenAddr := ":8080"
+
+	if val, ok := os.LookupEnv("FUNCTIONS_CUSTOMHANDLER_PORT"); ok {
+		listenAddr = ":" + val
 	}
-	mux := http.NewServeMux()
-	// mux.HandleFunc("/api/hello", helloHandler)
-	fmt.Println("Go server Listening on: ", customHandlerPort)
-	log.Fatal(http.ListenAndServe(":"+customHandlerPort, mux))
+	http.HandleFunc("api/HttpExample", helloHandler)
+	log.Printf("About to listen on %s. Go to https://127.0.0.1%s/", listenAddr, listenAddr)
+	log.Fatal(http.ListenAndServe(listenAddr, nil))
 }
